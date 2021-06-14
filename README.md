@@ -1,3 +1,3 @@
-# template
+# Sprite Test
 
-This is a template for starting new 3DS libctru projects.
+I'm just tinkering with the whole devkitPro 3DS API
