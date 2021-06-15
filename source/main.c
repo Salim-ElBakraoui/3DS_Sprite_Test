@@ -7,6 +7,20 @@
 #define SCREEN_WIDTH        400
 #define SCREEN_HEIGHT       240
 
+#define COLOR_RED           0xFF0000FF
+#define COLOR_BLUE          0xFFFF0000
+#define COLOR_GREEN         0xFF00FF00
+#define COLOR_WHITE         0xFFFFFFFF
+#define COLOR_CYAN          0xFFFFFF00
+#define COLOR_FUSCHIA       0xFFFF00FF
+#define COLOR_YELLOW        0xFF00FFFF
+
+
+#define mABGR(a,b,g,r)          ( ((u32)a<<24)|\
+                                  ((u32)b<<16)|\
+                                  ((u32)g<< 8)|\
+                                  ((u32)r<< 0)  )
+
 /*--------------------------------- GRAPHICS INITIALIZATION ---------------------------------*/
 static C2D_SpriteSheet cSpriteSheet;
 static C2D_Sprite      cSprite;
@@ -28,6 +42,10 @@ static void _GuileSwap(){
     C2D_SpriteSetPos(&cSprite, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
 }
 
+static void _DrawBackground(u32 colorTopLeft, u32 colorTopRight, u32 colorBotLeft, u32 colorBotRight){
+        C2D_DrawRectangle(0,0,0,SCREEN_WIDTH, SCREEN_HEIGHT, colorTopLeft, colorTopRight, colorBotLeft, colorBotRight);
+}
+
 int main(int argc, char*argv[]){
     /*--------------------------------- LIBRARY INITIALIZATION ---------------------------------*/
 
@@ -38,11 +56,19 @@ int main(int argc, char*argv[]){
     C2D_Prepare();
     consoleInit(GFX_BOTTOM, NULL);
 
+    u32 colorOne, colorTwo;
+    colorOne = COLOR_BLUE;
+    colorTwo = COLOR_CYAN;
+    
+    u32 colorSpeed = 0x5;
+    u32 colorTransition = 0x00;
+    int colorAsc = 0;
+    
     C3D_RenderTarget* pTopScrRender = C2D_CreateScreenTarget(GFX_TOP, GFX_LEFT);
     /*----------------------------------- CORE PROCESS TASKS -----------------------------------*/
 
+    int nbCount = 0;
     printf("Bienvenue dans mon application !\n"); //Welcome message showing on the bottom screen
-
     cSpriteSheet = C2D_SpriteSheetLoad("romfs:/gfx/sprites.t3x"); //Loads the spritesheet
     if (!cSpriteSheet) svcBreak(USERBREAK_PANIC);
 
@@ -65,8 +91,29 @@ int main(int argc, char*argv[]){
         C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
         C2D_TargetClear(pTopScrRender, C2D_Color32f(1.0f, 1.0f, 1.0f, 1.0f));//Clears the screen 2 white
         C2D_SceneBegin(pTopScrRender);
+        
+        
+        if(colorAsc && colorOne != COLOR_CYAN){
+            colorTransition+=colorSpeed;
+            colorOne = mABGR(0xFF,0xFF,colorTransition,0x00);
+            colorTwo = mABGR(0xFF,0xFF,(0xFF-colorTransition),0x00);
+        }
+        else if(colorTwo != COLOR_CYAN){
+            colorTransition-=colorSpeed;
+            colorOne = mABGR(0xFF,0xFF,colorTransition,0x00);
+            colorTwo = mABGR(0xFF,0xFF,(0xFF-colorTransition),0x00);
+        }
+        
+        if(!(colorTransition%255)) colorAsc = !colorAsc;
+
+                
+        //printf("\rColorOne: %lx\tColorTwo: %lx", colorOne, colorTwo);
+        
+        _DrawBackground(colorOne, colorTwo, colorTwo, colorOne);
         C2D_DrawSprite(&cSprite);
         C3D_FrameEnd(0);
+        nbCount++;
+
     }
 
     /*-------------------------------- APPLICATION EXIT PROCESS --------------------------------*/
