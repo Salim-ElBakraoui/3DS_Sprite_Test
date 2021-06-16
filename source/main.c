@@ -57,12 +57,12 @@ int main(int argc, char*argv[]){
     consoleInit(GFX_BOTTOM, NULL);
 
     u32 colorOne, colorTwo;
-    colorOne = COLOR_BLUE;
-    colorTwo = COLOR_CYAN;
+    colorOne = COLOR_YELLOW;
+    colorTwo = COLOR_RED;
     
     u32 colorSpeed = 0x5;
     u32 colorTransition = 0x00;
-    int colorAsc = 0;
+    int colorAsc = 1;
     
     C3D_RenderTarget* pTopScrRender = C2D_CreateScreenTarget(GFX_TOP, GFX_LEFT);
     /*----------------------------------- CORE PROCESS TASKS -----------------------------------*/
@@ -89,22 +89,41 @@ int main(int argc, char*argv[]){
 
         //---Scene Rendering--//
         C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
-        C2D_TargetClear(pTopScrRender, C2D_Color32f(1.0f, 1.0f, 1.0f, 1.0f));//Clears the screen 2 white
+        C2D_TargetClear(pTopScrRender, C2D_Color32f(1.0f, 1.0f, 1.0f, 1.0f)); //Clears the screen 2 white
         C2D_SceneBegin(pTopScrRender);
         
         
-        if(colorAsc && colorOne != COLOR_CYAN){
+        switch(colorAsc){
+        case 1:
             colorTransition+=colorSpeed;
-            colorOne = mABGR(0xFF,0xFF,colorTransition,0x00);
-            colorTwo = mABGR(0xFF,0xFF,(0xFF-colorTransition),0x00);
-        }
-        else if(colorTwo != COLOR_CYAN){
+            colorOne = mABGR(0xFF,0x00,(0xFF-colorTransition),0xFF);
+            colorTwo = mABGR(0xFF,0x00,0x00,0xFF);
+            printf("STEP 1\n");
+            break;
+        case 2:
             colorTransition-=colorSpeed;
-            colorOne = mABGR(0xFF,0xFF,colorTransition,0x00);
-            colorTwo = mABGR(0xFF,0xFF,(0xFF-colorTransition),0x00);
+            colorOne = mABGR(0xFF,0x00,(0xFF-colorTransition),0xFF);
+            colorTwo = mABGR(0xFF,0x00,0x00,0xFF);
+            printf("STEP 2\n");
+            break;
+        case 3:
+            colorTransition+=colorSpeed;
+            colorOne = mABGR(0xFF,0x00,(0xFF-colorTransition),0xFF);
+            colorTwo = mABGR(0xFF,0x00,(colorTransition),0xFF);
+            printf("STEP 3\n");
+            break;
+        case 4:
+            colorTransition-=colorSpeed;
+            colorOne = mABGR(0xFF,0x00,colorTransition,0xFF);
+            colorTwo = mABGR(0xFF,0x00,colorTransition,0xFF);
+            printf("STEP 4\n");
+            break;
+        case 5:
+            colorAsc=0;
+            break;
         }
         
-        if(!(colorTransition%255)) colorAsc = !colorAsc;
+        if(!(colorTransition%255)) colorAsc++;
 
                 
         //printf("\rColorOne: %lx\tColorTwo: %lx", colorOne, colorTwo);
