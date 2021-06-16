@@ -24,15 +24,26 @@
 /*--------------------------------- GRAPHICS INITIALIZATION ---------------------------------*/
 static C2D_SpriteSheet cSpriteSheet;
 static C2D_Sprite      cSprite;
+
+static C2D_Font        cFont;
+static C2D_Text        cText;
+static C2D_TextBuf     cTextBuf;
+
 static size_t sizeNbSprites;
-static u8 uGuileSwap;
+static u8 uGuileSwap = 0;
 
 static void _SpriteInitialization(){
+    cTextBuf = C2D_TextBufNew(4096); // support up to 4096 glyphs in the buffer
+    cFont = C2D_FontLoad("romfs:/Minecraft.bcfnt");
+    
     srand((unsigned int)time(NULL));
     sizeNbSprites=C2D_SpriteSheetCount(cSpriteSheet);
     C2D_SpriteFromSheet(&cSprite, cSpriteSheet, uGuileSwap); //Loads a random sprite
     C2D_SpriteSetCenter(&cSprite, 0.5f, 0.5f);
     C2D_SpriteSetPos(&cSprite, SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
+    
+    C2D_TextFontParse(&cText, cFont, cTextBuf, "GUILE");
+    C2D_TextOptimize(&cText);
 }
 
 static void _GuileSwap(){
@@ -50,6 +61,7 @@ int main(int argc, char*argv[]){
     /*--------------------------------- LIBRARY INITIALIZATION ---------------------------------*/
 
     romfsInit();
+    cfguInit();
     gfxInitDefault();
     C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
     C2D_Init(C2D_DEFAULT_MAX_OBJECTS);
@@ -57,10 +69,10 @@ int main(int argc, char*argv[]){
     consoleInit(GFX_BOTTOM, NULL);
 
     u32 colorOne, colorTwo;
-    colorOne = COLOR_YELLOW;
-    colorTwo = COLOR_RED;
+    colorOne = COLOR_CYAN;
+    colorTwo = COLOR_BLUE;
     
-    u32 colorSpeed = 0x5;
+    u32 colorSpeed = 0xF;
     u32 colorTransition = 0x00;
     int colorAsc = 1;
     
@@ -96,27 +108,23 @@ int main(int argc, char*argv[]){
         switch(colorAsc){
         case 1:
             colorTransition+=colorSpeed;
-            colorOne = mABGR(0xFF,0x00,(0xFF-colorTransition),0xFF);
-            colorTwo = mABGR(0xFF,0x00,0x00,0xFF);
-            printf("STEP 1\n");
+            colorOne = mABGR(0xFF,0xFF,colorTransition,0x00);
+            colorTwo = mABGR(0xFF,0xFF,0x00,0x00);
             break;
         case 2:
             colorTransition-=colorSpeed;
-            colorOne = mABGR(0xFF,0x00,(0xFF-colorTransition),0xFF);
-            colorTwo = mABGR(0xFF,0x00,0x00,0xFF);
-            printf("STEP 2\n");
+            colorOne = mABGR(0xFF,0xFF,0xFF,0x00);
+            colorTwo = mABGR(0xFF,0xFF,(0xFF-colorTransition),0x00);
             break;
         case 3:
             colorTransition+=colorSpeed;
-            colorOne = mABGR(0xFF,0x00,(0xFF-colorTransition),0xFF);
-            colorTwo = mABGR(0xFF,0x00,(colorTransition),0xFF);
-            printf("STEP 3\n");
+            colorOne = mABGR(0xFF,0xFF,(0xFF-colorTransition),0x00);
+            colorTwo = mABGR(0xFF,0xFF,0xFF,0x00);
             break;
         case 4:
             colorTransition-=colorSpeed;
-            colorOne = mABGR(0xFF,0x00,colorTransition,0xFF);
-            colorTwo = mABGR(0xFF,0x00,colorTransition,0xFF);
-            printf("STEP 4\n");
+            colorOne = mABGR(0xFF,0xFF,0x00,0x00);
+            colorTwo = mABGR(0xFF,0xFF,colorTransition,0x00);
             break;
         case 5:
             colorAsc=0;
@@ -128,8 +136,14 @@ int main(int argc, char*argv[]){
                 
         //printf("\rColorOne: %lx\tColorTwo: %lx", colorOne, colorTwo);
         
-        _DrawBackground(colorOne, colorTwo, colorTwo, colorOne);
+        _DrawBackground(colorOne, colorTwo, colorOne, colorTwo);
         C2D_DrawSprite(&cSprite);
+        C2D_DrawText(&cText, 0, 153, 159, 0.5, 1.05f, 1.1f);
+        
+        if(uGuileSwap)
+            C2D_DrawText(&cText, C2D_WithColor, 155, 160, 0.5, 1, 1, COLOR_WHITE);
+        else
+            C2D_DrawText(&cText, C2D_WithColor, 155, 160, 0.5, 1, 1, COLOR_YELLOW);
         C3D_FrameEnd(0);
         nbCount++;
 
@@ -141,6 +155,8 @@ int main(int argc, char*argv[]){
     C2D_SpriteSheetFree(cSpriteSheet);
 
     //Library Deinitialization
+    C2D_TextBufDelete(cTextBuf);
+	C2D_FontFree(cFont);
 	C2D_Fini();
 	C3D_Fini();
 	gfxExit();
